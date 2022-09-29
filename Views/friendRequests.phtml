@@ -1,0 +1,59 @@
+<?php require('template/header.phtml'); ?>
+
+    <!-- This table is to display friend requests -->
+    <div class="usersTable">
+        <h1>Welcome back <?php echo $fullNameArray[2] . " " . $fullNameArray[3]; ?></h1>
+        <h2>Friend Requests</h2>
+        <?php
+        //Some logic to check how many friend requests the user has and to display the correct
+        //grammar/sentence
+        if(sizeof($view->requestedFriends) > 1){
+            echo 'You have ' . sizeof($view->requestedFriends) .' pending friend requests to action';
+        }
+        elseif(sizeof($view->requestedFriends) == 1){
+            echo 'You have ' . sizeof($view->requestedFriends) .' pending friend request to action';
+        }
+
+        ?>
+        <div class="tableScroll">
+            <table  id="friendRequestsTable" class="table table-hover">
+            <thead class="thead-dark">
+            <tr>
+                <th>Username</th><th>Name</th><th>Profile Picture</th><th>Location</th><th colspan="2">Status</th>
+            </tr>
+            </thead>
+            <tbody>
+                <!-- This next bit is a mix of php and html to output the information of the users
+                friend request. Theres html forms included at the end so the user can choose how
+                to action the friend request (accept, reject or deny)-->
+                <?php
+                if (sizeof($view->requestedFriends) == 0) {
+                    echo '<tr><td rowspan="2" colspan="9"><h5>No friend requests to display!</h5></td></tr>';
+                }
+                else {
+                    foreach ($view->requestedFriends as $friend) {
+                        echo '<tr><td>' . $friend->getUsername() .
+                            '</td><td>' . $friend->getFirstName() . " " . $friend->getLastName() . '</td>';
+                        //checks if the user has a saved/uploaded profile image or a default robohash image and displays accordingly
+                        if(strpos($friend->getProfileImage(), 'robo')){
+                            echo '<td><img alt="profilePicture" width="60" height="60" src="' . $friend->getProfileImage() . '">';
+                        }
+                        else{
+                            echo '<td><img alt="profilePicture" width="90" height="60" src="Images/' . $friend->getProfileImage() . '">';
+                        }
+                        echo '</td><td>' . "(" . $friend->getLongitude() . ", " . $friend->getLatitude() . ")" .
+                                '</td><td><form method="post" action="friendRequests.php">
+                             <input type="submit" name="acceptFriendBtn" value="Accept" class="btn btn-success">
+                             <input type="hidden" name="hiddenFriendshipID" value="' . $friend->getFriendshipID() . '"></form></td>
+                             <td><form method="post" action="friendRequests.php">
+                             <input type="submit" name="rejectFriendBtn" value="Reject" class="btn btn-danger">
+                             <input type="hidden" name="hiddenFriendshipID" value="' . $friend->getFriendshipID() . '"></form></td>';
+                    }
+                }
+                ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<?php require('template/footer.phtml'); ?>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A FindMyFriends type of Web Application">
+    <meta name="author" content="Steven Duckett">
+    <link rel="icon" href="Media/Tab-Icon.png" />
+
+    <!--Bootstrap link below this line, along with my own custom CSS styling file -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link href="CSS/my-style.css" rel="stylesheet">
+    <title>FriendBook</title>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="index.php">FriendBook</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            </ul>
+            <?php
+            //The 4 lines below are needed because the header is the first thing required into a model
+            //and the $view is declared after it, so it cannot read/"see" it so $view->[variableNameHere] cannot be used
+            require_once('Models/UserDataSet.php');
+            $userDataSet = new UserDataSet();
+            $allUsersFriends = $userDataSet->retrieveAllFriendRequests($_SESSION['uid']);
+            $friendRequestNotificationCount = '(' . sizeof($allUsersFriends) . ')';
+
+            echo '<form method="post" action="blockedUsers.php"><button class="btn btn-outline-secondary" type="submit">View Blocked Users</button></form>';
+            echo '<form method="post" action="landingPageGeneral.php"><button class="btn btn-outline-secondary" type="submit">View All Users</button></form>';
+            if(sizeof($allUsersFriends) > 0){
+                echo '<form method="post" action="friendRequests.php"><button class="btn btn-outline-secondary" type="submit">Friend Requests ' . $friendRequestNotificationCount . '</button></form>';
+            }
+            else{
+                echo '<form method="post" action="friendRequests.php"><button class="btn btn-outline-secondary" type="submit">Friend Requests</button></form>';
+            }
+            echo '<form method="post" action="profilePage.php"><button class="btn btn-outline-secondary" type="submit">Profile</button></form>';
+            echo '<form method="post" action="landingPageUser.php"><button class="btn btn-outline-secondary" type="submit" name="logOut">Log Out</button></form>';
+
+            ?>
+
+            <div class="spacerDiv"></div>
+            <form class="d-flex" method="post" action="search.php">
+                <input class="form-control me-2" name="userSearchTerm" type="search" placeholder="Search" aria-label="Search" required>
+                <select name="searchCriteria" class="searchCriteria">
+                    <option>Search By:</option>
+                    <option>First Name</option>
+                    <option>Last Name</option>
+                    <option>Username</option>
+                </select>
+                <select name="searchFilter" class="searchCriteria">
+                    <option>Sort By:</option>
+                    <option>First Name</option>
+                    <option>Last Name</option>
+                    <option>UserID</option>
+                </select>
+                <button class="btn btn-outline-secondary" type="submit" name="searchSubmit">Search</button>
+            </form>
+        </div>
+    </div>
+</nav>
+<div id="content" class="container-l">

@@ -1,0 +1,130 @@
+<?php
+//If the session is set, load the full header with extra options as the user
+//is logged in
+if(isset($_SESSION['login'])){
+    require('template/header.phtml');
+}
+//If the session is not set, load the index/restricted header which only
+//shows the search bar
+else {
+    require('template/indexHeader.phtml');
+}
+?>
+    <div class="usersTable">
+        <h2>Search Results:</h2>
+        <?php
+        //Some logic to check how many results have been returned and display the correct
+        //grammar/sentence
+        if(isset($_SESSION['login'])){
+            if(sizeof($view->searchResults) > 1){
+                echo 'Showing ' . sizeof($view->searchResults) .' Results (' . $noOfRecordsPerPage . ' per page)';
+            }
+            elseif(sizeof($view->searchResults) == 1){
+                echo 'Showing ' . sizeof($view->searchResults) .' Result';
+            }
+        }
+        else{
+            if(sizeof($view->searchResults) > 1){
+                echo 'Showing the first 3 of ' . sizeof($view->searchResults) .' Results';
+            }
+            elseif(sizeof($view->searchResults) == 1){
+                echo 'Showing the first 3 of ' . sizeof($view->searchResults) .' Result';
+            }
+        }
+        echo '<br>';
+        echo 'Viewing page number ' . $view->pageNumber . ' of ' . $view->numberOfPages;
+        echo '<br>';
+        echo '<div id="paginationLinks">';
+        for($i=1; $i<=$view->numberOfPages; $i++){
+            echo '<form method="post" action="search.php?page=' . $i . '"><input class="searchPaginationInput" type="submit" name="paginationButton" value="' . $i . '"><input type="hidden" value="' . $view->userSearchTerm . '" name="userSearchTerm"><input type="hidden" value="' . $view->searchCriteria . '" name="searchCriteria"><input type="hidden" value="' . $view->searchFilter . '" name="searchFilter"></form>';
+        }
+        echo '</div>';
+        echo '<br>';
+        ?>
+        <div class="tableScroll">
+            <table class="table table-hover">
+                <thead class="thead-dark">
+                <?php
+                //Check if the session is set to see if a user is logged in. If they are, add in the status/add friend column because
+                //registered users can add friends
+                    if(isset($_SESSION['login'])) {
+                        echo '<tr><th>Username</th><th>Name</th><th>Profile Picture</th><th colspan="2">Status</th></tr>';
+                    }
+                    else{
+                        //Non-registered/non-loggedin users cannot add/request friends so dont display the add/request friend column
+                        echo '<tr><th>Name</th><th>Profile Picture</th>';
+                    }
+                ?>
+                </thead>
+                <tbody>
+                <?php
+                //Had to require the UserDataDet again in the view because the retrieveBlockedUsers function requires a parameter
+                //which is the ID of the search result user and this cannot be accessed until AFTER the view is required
+                    require_once('Models/UserDataSet.php');
+                    $blockedUsers = new UserDataSet();
+                    if(sizeof($view->paginatedSearchResults) == 0){
+                        echo '<tr><td rowspan="2" colspan="5"><h5>No results to display!</h5></td></tr>';
+                    }
+                    else {
+                        //if the session is set, a user is logged in (and registered), so display all search results
+                        if(isset($_SESSION['login'])) {
+                            foreach ($view->paginatedSearchResults as $userData) {
+                                //For each user, call the retrieveBlockedUserStatus function below to check if the user who is logged in
+                                //has blocked the search result user (if a blocked friendship exists, the function returns the id of that friendship)
+                                $userStatus = $blockedUsers->retrieveUserStatus($userData->getUserID(), $_SESSION['uid']);
+                                if($userStatus == 4) {
+                                    //If status equals 4, user is blocked so dont show them to whoever is logged in
+                                    echo '<tr><td colspan="5">You have blocked this user, so we removed them from the results</td></tr>';
+                                }
+                                else{
+                                    //If status does not equal 4, then show the information
+                                    echo '<tr><td>' . $userData->getUsername() . '</td>';
+                                    echo '<td>' . $userData->getFirstName() . " " . $userData->getLastName() . '</td>';
+                                    //checks if the user has a saved/uploaded profile image or a default robohash image and displays accordingly
+                                    if (strpos($userData->getProfileImage(), 'robo')) {
+                                        echo '<td><img alt="profilePicture" width="60" height="60" src="' . $userData->getProfileImage() . '"></td>';
+                                    } else {
+                                        echo '<td><img alt="profilePicture" width="90" height="60" src="Images/' . $userData->getProfileImage() . '"></td>';
+                                    }
+                                    //now, for each user who isnt blocked, show a different status output depending on the current friendship status
+                                    if($userStatus == 2){
+                                        echo '<td colspan="2">You are already friends with this user<form method="post" action="friendRequests.php" ><input type="submit" name="blockUserBtn" value="Block" class="btn btn-danger"><input type="hidden" name="hiddenUserID" value="' . $userData->getUserID() . '"></form></td></tr>';
+                                    }
+                                    elseif ($userStatus == 1){
+                                        echo '<td colspan="2">A friend request is pending<form method="post" action="friendRequests.php" ><input type="submit" name="blockUserBtn" value="Block" class="btn btn-danger"><input type="hidden" name="hiddenUserID" value="' . $userData->getUserID() . '"></form></td></tr>';
+                                    }
+                                    else {
+                                        //If none of the above are true, then no friendship exists so offer an add friend button
+                                        echo '<td><form method="post" action="friendRequests.php" ><input type="submit" name="addFriend" value="Add Friend" class="btn btn-success"><input type="hidden" name="hiddenUserID" value="' . $userData->getUserID() . '"></td><td><input type="submit" name="blockUserBtn" value="Block" class="btn btn-danger"><input type="hidden" name="hiddenUserID" value="' . $userData->getUserID() . '"></td></form></td></tr>';
+                                    }
+                                }
+                            }
+                        }
+                        else{
+                            //if session not set and user not logged in, then only display the first 3 search results with a message
+                            //informing the user that they need to log in/register to see more
+                            $numberOfResultsDisplayed = 0;
+                            //For each user in the search results, do the following
+                            foreach ($view->searchResults as $userData) {
+                                //Limit of 3 users shown to a user who isn't logged in, so check if number of users
+                                //displayed == 3, if so, stop and move on
+                                if ($numberOfResultsDisplayed != 3) {
+                                    //Displaying limited information about the search results as the user isn't logged in
+                                    echo '<tr><td>' . $userData->getFirstName() . $userData->getLastName() . '</td>';
+                                    if (strpos($userData->getProfileImage(), 'robo')) {
+                                        echo '<td><img alt="profilePicture" width="60" height="60" src="' . $userData->getProfileImage() . '"></td>';
+                                    } else {
+                                        echo '<td><img alt="profilePicture" width="90" height="60" src="Images/' . $userData->getProfileImage() . '"></td>';
+                                    }
+                                    $numberOfResultsDisplayed = $numberOfResultsDisplayed + 1;
+                                }
+                            }
+                            echo '<tr><td colspan="4">Register or Log In to see more search results</td></tr>';
+                        }
+                    }
+                ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<?php require('template/footer.phtml'); ?>

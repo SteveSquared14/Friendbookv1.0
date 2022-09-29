@@ -1,0 +1,69 @@
+<?php require('template/header.phtml'); ?>
+
+<!-- This table is to display the users current Friends -->
+    <div class="usersTable">
+        <h1>Welcome back <?php echo $fullNameArray[2] . " " . $fullNameArray[3]; ?></h1>
+        <h2>All Users</h2>
+        <?php
+        if($view->allUsers > 1){
+            echo $view->allUsers .' Results (' . $noOfRecordsPerPage . ' per page)';
+        }
+        else{
+            echo $view->allUsers .'Result (' . $noOfRecordsPerPage . ' per page)';
+        }
+        echo '<br>';
+        echo 'Viewing page number ' . $view->pageNumber . ' of ' . $view->numberOfPages;
+        echo '<div id="paginationLinks">';
+        for($i=1; $i<=$view->numberOfPages; $i++){
+            echo '<form method="post" action="landingPageGeneral.php?page=' . $i . '"><input class="searchPaginationInput" type="submit" name="paginationButton" value="' . $i . '"></form>';
+        }
+        echo '</div>';
+        echo '<br>';
+        ?>
+        <div class="tableScroll">
+            <table  id="friendsTable" class="table table-hover">
+                <thead class="thead-dark">
+                <tr>
+                    <th>Username</th><th>Name</th><th>Profile Picture</th><th>Location</th><th colspan="2">Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php
+                require_once('Models/UserDataSet.php');
+                $allUsersStatus = new UserDataSet();
+                foreach ($view->allPaginatedUsers as $user) {
+                    $userStatus = $allUsersStatus->retrieveUserStatus($user->getUserID(), $_SESSION['uid']);
+                    if ($userStatus == 4){
+                        //user to display has been blocked by logged in user
+                        echo '<tr><td colspan="6">You have blocked this user, so we removed them from the results</td></tr>';
+                    }
+                    else {
+                        echo '<tr><td>' . $user->getUsername() . '
+                            </td><td>' . $user->getFirstName() . " " . $user->getLastName() .'</td>';
+                        //checks if the user has a saved/uploaded profile image or a default robohash image and displays accordingly
+                        if (strpos($user->getProfileImage(), 'robo')) {
+                            echo '<td><img alt="profilePicture" width="60" height="60" src="' . $user->getProfileImage() . '"></td>';
+                        } else {
+                            echo '<td><img alt="profilePicture" width="90" height="60" src="/Images/' . $user->getProfileImage() . '"></td>';
+                        }
+                        echo '<td>' . "(" . $user->getLongitude() . ", " . $user->getLatitude() . ")" . '</td>';
+                        if ($userStatus == -1) {
+                            //no friendshipStatus exists so offer the option to add a friend or block
+                            echo '<td><form method="post" action="friendRequests.php" ><input type="submit" name="addFriend" value="Add Friend" class="btn btn-success"><input type="hidden" name="hiddenUserID" value="' . $user->getUserID() . '"></form></td>
+                        <td><form method="post" action="friendRequests.php" ><input type="submit" name="blockUserBtn" value="Block" class="btn btn-danger"><input type="hidden" name="hiddenUserID" value="' . $user->getUserID() . '"></form></td></tr>';
+                        } elseif ($userStatus == 2) {
+                            //already an accepted friendship between user to be displayed and logged in user
+                            echo '<td colspan="2">You are already friends with this user<form method="post" action="friendRequests.php" ><input type="submit" name="blockUserBtn" value="Block" class="btn btn-danger"><input type="hidden" name="hiddenUserID" value="' . $user->getUserID() . '"></form></td></tr>';
+                        } elseif ($userStatus == 1) {
+                            //already a pending friend request
+                            echo '<td colspan="2">A friend request is pending<form method="post" action="friendRequests.php" ><input type="submit" name="blockUserBtn" value="Block" class="btn btn-danger"><input type="hidden" name="hiddenUserID" value="' . $user->getUserID() . '"></form></td></tr>';
+                        }
+                    }
+                }
+                ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<?php require('template/footer.phtml'); ?>

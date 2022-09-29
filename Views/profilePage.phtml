@@ -1,0 +1,81 @@
+<?php require('template/header.phtml'); ?>
+
+<div class="usersTable">
+    <h1>Welcome back <?php echo $fullNameArray[2] . " " . $fullNameArray[3]; ?></h1>
+    <form action="profilePage.php" method="post">
+        <h5>Account Details</h5>
+        <?php
+            if(isset($updateDetailsResponse)){
+                echo '<div class="errorMessageDiv"><p class="errorMessage">' . $updateDetailsResponse . '</p></div>';
+            }
+        ?>
+        <table class="table table-hover">
+            <thead class="thead-dark">
+            <tr>
+                <th>Criteria</th><th>Current Value</th><th>New Value</th>
+            </tr>
+            </thead>
+            <tbody>
+                <?php foreach($view->profileResults as $userData){
+                    //dispalys the details of the user logged in the the system, which is the only UserData object in the
+                    //$view->profileResults array
+                    echo '<tr><td>Username:</td>';
+                    echo '<td>' . $userData->getUsername() . '</td>';
+                    echo '<td><input type="text" name="newUserName" placeholder="Enter new username..." required></td></tr>';
+
+                    echo '<tr><td>First Name</td>';
+                    echo '<td>' . $userData->getFirstName() . '</td>';
+                    echo '<td><input type="text" name="newFirstName" placeholder="Enter new first name..." required></td></tr>';
+
+                    echo '<tr><td>Last Name:</td>';
+                    echo '<td>' . $userData->getLastName() . '</td>';
+                    echo '<td><input type="text" name="newLastName" placeholder="Enter new last name..." required></td></tr>';
+
+                    echo '<tr><td>E-mail:</td>';
+                    echo '<td>' . $userData->getEmail() . '</td>';
+                    echo '<td><input type="text" name="newEmail" placeholder="Enter new e-mail..." required></td></tr>';
+
+                    echo '<tr><td>Password:</td>';
+                    echo '<td><input type="text" name="currentPassword" placeholder="Enter current password..." required></td>';
+                    echo '<td><input type="text" name="newPassword" placeholder="Enter new password..." required></td></tr>';
+                    echo '<tr><td colspan="3"><input type="Submit" name="submitNewDetails" value="Save"></td></tr>';
+                }
+                ?>
+            </tbody>
+        </table>
+    </form>
+
+    <h5>Profile Picture</h5>
+    <?php
+    if(isset($imageUploadResponse)){
+        echo '<div class="errorMessageDiv"><p class="errorMessage">' . $imageUploadResponse . '</p></div>';
+    }
+    ?>
+    <table class="table table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th>Criteria</th><th>Current Value</th><th>New Value</th>
+            </tr>
+        </thead>
+        <tbody>
+        <?php
+        foreach($view->profileResults as $userData){
+            echo '<tr><td>Profile Image:</td>';
+            //checks if the user has a saved/uploaded profile image or a default robohash image and displays accordingly
+            if(strpos($userData->getProfileImage(), 'robo')){
+                echo '<td><img alt="profilePicture" width="60" height="60" src="' . $userData->getProfileImage() . '" required>';
+            }
+            else{
+                echo '<td><img alt="profilePicture" width="80" height="60" src="Images/' . $userData->getProfileImage() . '" required>';
+            }
+        }
+        echo '<td><form action="imageUpload.php" method="post" enctype="multipart/form-data">Select image to upload:
+                <input type="file" name="fileToUpload" id="fileToUpload">
+                <input type="submit" value="Upload Image" name="imageUploadBtn">
+            </form></td></tr>';
+        ?>
+        </tbody>
+    </table>
+</div>
+
+<?php require('template/footer.phtml'); ?>

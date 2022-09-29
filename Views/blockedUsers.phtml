@@ -1,0 +1,48 @@
+<?php require('template/header.phtml'); ?>
+
+    <!-- This table is to display the users current Friends -->
+    <div class="usersTable">
+        <h1>Welcome back <?php echo $fullNameArray[2] . " " . $fullNameArray[3]; ?></h1>
+        <h2>Blocked Users</h2>
+        <?php
+        //Some logic to check how many results have been returned and display the correct
+        //grammar/sentence
+        if(sizeof($view->blockedUsers) > 1){
+            echo 'You have blocked ' . sizeof($view->blockedUsers) .' Users';
+        }
+        elseif(sizeof($view->blockedUsers) == 1){
+            echo 'You have blocked ' . sizeof($view->blockedUsers) .' User';
+        }
+        ?>
+        <div class="tableScroll">
+            <table  id="friendsTable" class="table table-hover">
+                <thead class="thead-dark">
+                <tr>
+                    <th>Username</th><th>Name</th><th>Profile Picture</th><th>Location</th><th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php
+                if(sizeof($view->blockedUsers) == 0){
+                    echo '<tr><td rowspan="2" colspan="9"><h5>You haven\'t blocked anyone!</h5></td></tr>';
+                }
+                foreach ($view->blockedUsers as $blockedUser) {
+                        echo '<tr><td>' . $blockedUser->getUsername() .
+                            '</td> <td>' . $blockedUser->getFirstName() . " " . $blockedUser->getLastName() . '</td>';
+                        //checks if the user has a saved/uploaded profile image or a default robohash image and displays accordingly
+                        if (strpos($blockedUser->getProfileImage(), 'robo')) {
+                            echo '<td><img alt="profilePicture" width="60" height="60" src="' . $blockedUser->getProfileImage() . '"></td>';
+                        } else {
+                            echo '<td><img alt="profilePicture" width="90" height="60" src="/Images/' . $blockedUser->getProfileImage() . '"></td>';
+                        }
+                         echo '<td>' . "(" . $blockedUser->getLongitude() . ", " . $blockedUser->getLatitude() . ")" . '</td>';
+
+                            echo '<td><form action="friendRequests.php" method="post"><input type="submit" name="rejectFriendBtn" value="Unblock" class="btn btn-primary"><input type="hidden" name="hiddenFriendshipID" value="' . $blockedUser->getFriendshipID() . '"></form></td>';
+                }
+                ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<?php require('template/footer.phtml'); ?>

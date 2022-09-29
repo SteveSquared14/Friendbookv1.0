@@ -1,0 +1,86 @@
+<?php require('template/header.phtml'); ?>
+
+    <!-- This table is to display the users current Friends -->
+    <div class="usersTable">
+        <h1>Welcome back <?php echo $fullNameArray[2] . " " . $fullNameArray[3]; ?></h1>
+        <h2>Friendships</h2>
+        <?php
+        //The following works out, for each of the friends returned by the retrieveAllFriendships() method in the controller,
+        //how many of each type there are. Only going to display the friends on this page where friendshipStatus != 4 OR
+        //friendshipStatus != 1 AND friend2ID != the ID of the user logged in
+
+        $friendsRequested = 0;
+        $friendsDisplayed = 0;
+        foreach ($view->friendships as $friend) {
+            if($friend->getFriendshipStatusID() == 2) {
+                $friendsDisplayed++;
+            }
+            elseif($friend->getFriendshipStatusID() == 1 && ($friend->getFriend1ID() == $view->loggedInUserID)){
+                $friendsRequested++;
+            }
+        }
+
+        //Some logic to check how many results have been returned and display the correct
+        //grammar/sentence
+        if(sizeof($view->friendships) > 1){
+            echo 'You have ' . $friendsDisplayed .' friends, and ' . $friendsRequested . ' friend requests waiting to be accepted';
+        }
+        elseif(sizeof($view->friendships) == 1){
+            echo 'You have ' . $friendsDisplayed .' Friend';
+        }
+        ?>
+        <div class="tableScroll">
+            <table  id="friendsTable" class="table table-hover">
+                <thead class="thead-dark">
+                <tr>
+                    <th>Username</th><th>Name</th><th>Profile Picture</th><th>Location</th><th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php
+                //if size of view->friendships array is 0 then the user has no friends so inform them
+                if (sizeof($view->friendships) == 0) {
+                    echo '<tr><td rowspan="2" colspan="9"><h5>No friends to display!</h5></td></tr>';
+                }
+                else {
+                    //otherwise, display each friend as follows:
+                    foreach ($view->friendships as $friend) {
+                        //If the friendship status ID is 4 then theyre blocked so dont show them to the user
+                        if($friend->getFriendshipStatusID() == 4) {
+                        }
+                        //If the following is true, there is a pending friend request so skip it as it will be
+                        //shown in the friend requests page/screen
+                        elseif($friend->getFriendshipStatusID() == 1 && ($friend->getFriend2ID() == $view->loggedInUserID)){
+                        }
+                        //Once here, all the filtering is done to display the users basic info, then use logical if statements
+                        //to amend the status column depending on what status number of the friendship currently is
+                        else {
+                            echo '<tr><td>' . $friend->getUsername() .
+                                '</td> <td>' . $friend->getFirstName() . " " . $friend->getLastName() .
+                                '</td>';
+                            if (strpos($friend->getProfileImage(), 'robo')) {
+                                echo '<td><img alt="profilePicture" width="60" height="60" src="' . $friend->getProfileImage() . '">';
+                            } else {
+                                echo '<td><img alt="profilePicture" width="90" height="60" src="Images/' . $friend->getProfileImage() . '">';
+                            }
+                            echo '<td>' . "(" . $friend->getLongitude() . ", " . $friend->getLatitude() . ")" . '</td>';
+
+                            if ($friend->getFriendshipStatusID() == "2") {
+                                if ($friend->getFriend1ID() == $view->loggedInUserID) {
+                                    echo '<td>You have added them<form action="friendRequests.php" method="post"><input type="submit" name="rejectFriendBtn" value="Remove" class="btn btn-warning"><input type="hidden" name="hiddenFriendshipID" value="' . $friend->getFriendshipID() . '"></form></td>';
+                                } else {
+                                    echo '<td>You have accepted their request<form action="friendRequests.php" method="post"><input type="submit" name="rejectFriendBtn" value="Remove" class="btn btn-warning"><input type="hidden" name="hiddenFriendshipID" value="' . $friend->getFriendshipID() . '"></form></td>';
+                                }
+                            } elseif ($friend->getFriendshipStatusID() == "1" && ($friend->getFriend1ID() == $view->loggedInUserID)) {
+                                echo '<td>You have requested<form action="friendRequests.php" method="post"><input type="submit" name="rejectFriendBtn" value="Cancel" class="btn btn-danger"><input type="hidden" name="hiddenFriendshipID" value="' . $friend->getFriendshipID() . '"></form></td>';
+                            }
+                        }
+                    }
+                }
+                ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<?php require('template/footer.phtml'); ?>
